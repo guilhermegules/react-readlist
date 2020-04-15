@@ -7,7 +7,7 @@
     "start": "nodemon src/app.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Guilherme Gules Moreira",
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.1",
