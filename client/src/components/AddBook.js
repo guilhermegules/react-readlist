@@ -1,57 +1,70 @@
-import React, { useState } from "react";
-import { graphql } from "react-apollo";
-import { flowRight as compose } from "lodash";
-import { getAuthorsQuery, addBookMutation } from "../queries/queries";
+import React, { useState, useMemo, useCallback } from "react";
+import { useQuery, useMutation } from "@apollo/react-hooks";
+import {
+  getAuthorsQuery,
+  addBookMutation,
+  getBooksQuery,
+} from "../queries/queries";
 
-function AddBook(props) {
+function getOptions(loading, error, data) {
+  if (loading) {
+    return <option disabled>Loading Authors....</option>;
+  } else if (error) {
+    return <option disabled>Error loading Authors</option>;
+  }
+  return data.authors.map(({ name, id }) => (
+    <option key={id} value={id}>
+      {name}
+    </option>
+  ));
+}
+
+function AddBook() {
+  const { loading, error, data } = useQuery(getAuthorsQuery);
+  const [addBook] = useMutation(addBookMutation);
   const [name, setName] = useState("");
   const [genre, setGenre] = useState("");
   const [authorId, setAuthorId] = useState("");
 
-  function displayAuthors() {
-    const { loading, authors } = props.getAuthorsQuery;
-    if (loading) {
-      return <option disabled>Loading Authors...</option>;
-    }
-    return authors.map((author) => {
-      return (
-        <option key={author.id} value={author.id}>
-          {author.name}
-        </option>
-      );
-    });
-  }
+  const options = useMemo(() => getOptions(loading, error, data), [
+    loading,
+    error,
+    data,
+  ]);
 
-  function submitForm(event) {
-    event.preventDefault();
-    props.addBookMutation({
-      variables: { name: name, genre: genre, authorId: authorId },
-    });
-  }
+  const nameCB = useCallback((event) => setName(event.target.value), []);
+  const genreCB = useCallback((event) => setGenre(event.target.value), []);
+  const authorCB = useCallback((event) => setAuthorId(event.target.value), []);
+  const addCB = useCallback(
+    (event) => {
+      event.preventDefault();
+      addBook({
+        variables: {
+          name,
+          genre,
+          authorId,
+        },
+        refetchQueries: [{ query: getBooksQuery }],
+      });
+    },
+    [name, genre, authorId, addBook]
+  );
 
   return (
-    <form id="add-book" onSubmit={submitForm}>
+    <form className="add-book" onSubmit={addCB}>
       <div className="field">
         <label htmlFor="Book name">Book name:</label>
-        <input
-          type="text"
-          placeholder="Your favorite book"
-          onChange={(event) => setName(event.target.value)}
-        />
+        <input type="text" placeholder="Your favorite book" onChange={nameCB} />
       </div>
       <div className="field">
         <label htmlFor="Book genre">Genre:</label>
-        <input
-          type="text"
-          placeholder="Book genre here"
-          onChange={(event) => setGenre(event.target.value)}
-        />
+        <input type="text" placeholder="Book genre here" onChange={genreCB} />
       </div>
       <div className="field">
         <label htmlFor="Book author">Author:</label>
-        <select onChange={(event) => setAuthorId(event.target.value)}>
+        <select onChange={authorCB}>
           <option>Select author</option>
-          {displayAuthors()}
+          {options}
         </select>
       </div>
       <button>+</button>
@@ -59,7 +72,4 @@ function AddBook(props) {
   );
 }
 
-export default compose(
-  graphql(getAuthorsQuery, { name: "getAuthorsQuery" }),
-  graphql(addBookMutation, { name: "addBookMutation" })
-)(AddBook);
+export default AddBook;
