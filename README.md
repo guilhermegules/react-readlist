@@ -19,7 +19,7 @@ Application Builted with this [tutorial](https://www.youtube.com/watch?v=Y0lDGjw
 ## Run application
 - Running application `docker-compose --build`
 
- ## Interface example
+<h1 align="center">Interface example</h1>
 <p align="center">
-    <img src="./images/layout-example.gif"/>
+	<img  src="./images/layout-example.gif"/>
 </p>
